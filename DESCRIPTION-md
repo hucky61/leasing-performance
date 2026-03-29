@@ -1,0 +1,13 @@
+# Leasing Performance
+
+Diese App dient zur Kalkulation der Performance meines Autos im Leasingvertrag.
+Ausgehend von einem Startwert des Autos, wird die Performance über die Zeit kalkuliert.
+Für das Ende des Leasingvertrags wird die Performance des Autos kalkuliert.
+
+Die Performance ist sind gefahrene Kilometer an einem bestimmten Tag während der Leasingzeit.
+
+## Features
+
+- Kalkulation der Performance
+- Anzeige der Performance
+- Anzeige der gefahrenen Kilometer
