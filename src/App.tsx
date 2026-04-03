@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLeasingStore } from './store/useLeasingStore';
 import Dashboard from './components/Dashboard';
 import ContractSettings from './components/ContractSettings';
@@ -16,9 +16,22 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const { contract, entries, saveContract, addEntry, updateEntry, deleteEntry, computeStats } =
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('lp_theme') as 'dark' | 'light') ?? 'dark';
+  });
+
+  const { contract, entries, saveContract, addEntry, updateEntry, deleteEntry, stats } =
     useLeasingStore();
-  const stats = computeStats();
+
+  // Apply theme to root element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('lp_theme', theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }
 
   return (
     <div className="app">
@@ -40,6 +53,15 @@ function App() {
             </button>
           ))}
         </nav>
+        <button
+          id="theme-toggle"
+          className="btn btn-ghost theme-toggle"
+          onClick={toggleTheme}
+          aria-label="Theme wechseln"
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
       </header>
 
       <main className="app-main">

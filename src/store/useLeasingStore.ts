@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { LeasingContract, MileageEntry, PerformanceStats } from '../types';
 import { v4 as uuidv4 } from '../utils/uuid';
 
@@ -59,7 +59,7 @@ export function useLeasingStore() {
     setEntriesState((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
-  const computeStats = useCallback((): PerformanceStats | null => {
+  const stats = useMemo((): PerformanceStats | null => {
     if (!contract.startDate || !contract.endDate || entries.length === 0) return null;
 
     const start = new Date(contract.startDate).getTime();
@@ -71,8 +71,9 @@ export function useLeasingStore() {
     const daysRemaining = Math.max(0, contractDays - daysSinceStart);
 
     const sortedEntries = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-    const latestEntry = sortedEntries[sortedEntries.length - 1];
-    const actualKmDriven = latestEntry.mileage - contract.startMileage;
+    // Use the entry with the highest mileage (not just the last chronologically)
+    const maxEntry = sortedEntries.reduce((best, e) => (e.mileage > best.mileage ? e : best));
+    const actualKmDriven = maxEntry.mileage - contract.startMileage;
 
     const progressPercent = Math.min(100, (daysSinceStart / contractDays) * 100);
     const targetKmDriven = (contract.allowedKm * daysSinceStart) / contractDays;
@@ -98,5 +99,5 @@ export function useLeasingStore() {
     };
   }, [contract, entries]);
 
-  return { contract, entries, saveContract, addEntry, updateEntry, deleteEntry, computeStats };
+  return { contract, entries, saveContract, addEntry, updateEntry, deleteEntry, stats };
 }

@@ -79,6 +79,15 @@ export default function Dashboard({ contract, entries, stats }: Props) {
 
   return (
     <div className="dashboard">
+      {stats.daysRemaining > 0 && stats.daysRemaining <= 30 && (
+        <div className="warning-banner" role="alert">
+          <span className="warning-icon">⏳</span>
+          <div>
+            <strong>Vertragsende in {stats.daysRemaining} Tagen!</strong>
+            <span> – Denk daran, den Kilometerstand zu prüfen und ggf. Maßnahmen zu ergreifen.</span>
+          </div>
+        </div>
+      )}
       <div className="dashboard-header">
         <div>
           <h1 className="dashboard-title">Performance-Übersicht</h1>

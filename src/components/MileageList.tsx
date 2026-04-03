@@ -37,7 +37,27 @@ export default function MileageList({ entries, onAdd, onUpdate, onDelete }: Prop
     setEditId(null);
   }
 
+  // Sort descending (newest first) for display
   const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+  // Sort ascending to compute deltas (prev → next)
+  const sortedAsc = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Build a map: entry id → delta since previous entry
+  const deltaMap = new Map<string, number | null>();
+  sortedAsc.forEach((entry, idx) => {
+    if (idx === 0) {
+      deltaMap.set(entry.id, null); // first entry has no predecessor
+    } else {
+      deltaMap.set(entry.id, entry.mileage - sortedAsc[idx - 1].mileage);
+    }
+  });
+
+  // Fix: use T12:00:00 to avoid timezone off-by-one; guard against invalid dates
+  function formatDate(iso: string) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso ?? '–';
+    const d = new Date(iso + 'T12:00:00');
+    return isNaN(d.getTime()) ? iso : d.toLocaleDateString('de-DE');
+  }
 
   return (
     <div className="card">
@@ -79,6 +99,7 @@ export default function MileageList({ entries, onAdd, onUpdate, onDelete }: Prop
               <tr>
                 <th>Datum</th>
                 <th>Kilometerstand</th>
+                <th>Differenz</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
@@ -102,6 +123,7 @@ export default function MileageList({ entries, onAdd, onUpdate, onDelete }: Prop
                         className="inline-input"
                       />
                     </td>
+                    <td>–</td>
                     <td className="action-cell">
                       <button className="btn btn-sm btn-success" onClick={() => saveEdit(entry.id)}>✓</button>
                       <button className="btn btn-sm btn-ghost" onClick={cancelEdit}>✗</button>
@@ -109,8 +131,21 @@ export default function MileageList({ entries, onAdd, onUpdate, onDelete }: Prop
                   </tr>
                 ) : (
                   <tr key={entry.id}>
-                    <td>{new Date(entry.date).toLocaleDateString('de-DE')}</td>
+                    <td>{formatDate(entry.date)}</td>
                     <td>{entry.mileage.toLocaleString('de-DE')} km</td>
+                    <td>
+                      {(() => {
+                        const delta = deltaMap.get(entry.id);
+                        if (delta === null || delta === undefined) {
+                          return <span className="delta-first">Ersteintrag</span>;
+                        }
+                        return (
+                          <span className={`delta-badge ${delta >= 0 ? 'delta-pos' : 'delta-neg'}`}>
+                            {delta >= 0 ? '+' : ''}{delta.toLocaleString('de-DE')} km
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="action-cell">
                       <button className="btn btn-sm btn-ghost" onClick={() => startEdit(entry)}>✏️</button>
                       <button className="btn btn-sm btn-danger" onClick={() => onDelete(entry.id)}>🗑️</button>
